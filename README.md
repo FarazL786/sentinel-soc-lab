@@ -61,6 +61,13 @@ Configured the Azure Monitor Agent (AMA) and two Data Collection Rules to forwar
 Installed the relevant Microsoft Sentinel data connectors and confirmed successful Azure Monitor Agent provisioning.
 
 ### 4. Log Collection Verification
+Used Kusto Query Language (KQL) to confirm that both log sources were successfully transmitting events to the Log Analytics workspace.
+
+- **SecurityEvent:** Verified Windows Security events were arriving, including authentication events.
+- **WindowsEvent:** Verified Sysmon events were arriving from the `Microsoft-Windows-Sysmon/Operational` channel.
+
+Both queries returned results, confirming that the VM was successfully forwarding security telemetry to Microsoft Sentinel.
+
 ## KQL Queries & Threat Detection
 
 Used Kusto Query Language (KQL) to investigate Windows Security and Sysmon logs collected from the Azure virtual machine.
@@ -217,9 +224,3 @@ The collected evidence confirmed repeated failed authentication attempts consist
 **No successful unauthorised access was identified in the reviewed logs.** However, the investigation did not establish that compromise was impossible.
 
 The exercise demonstrated the SOC investigation lifecycle: **Detection → Triage → Log Analysis → Evidence Review → Documentation → Classification → Closure**.
-Used Kusto Query Language (KQL) to confirm that both log sources were successfully transmitting events to the Log Analytics workspace.
-
-- **SecurityEvent:** Verified Windows Security events were arriving, including authentication events.
-- **WindowsEvent:** Verified Sysmon events were arriving from the `Microsoft-Windows-Sysmon/Operational` channel.
-
-Both queries returned results, confirming that the VM was successfully forwarding security telemetry to Microsoft Sentinel.
