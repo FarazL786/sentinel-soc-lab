@@ -61,7 +61,95 @@ Configured the Azure Monitor Agent (AMA) and two Data Collection Rules to forwar
 Installed the relevant Microsoft Sentinel data connectors and confirmed successful Azure Monitor Agent provisioning.
 
 ### 4. Log Collection Verification
+## KQL Queries & Threat Detection
 
+Used Kusto Query Language (KQL) to investigate Windows Security and Sysmon logs collected from the Azure virtual machine.
+
+### 1. Investigating Failed Login Attempts (Event ID 4625)
+
+The following query identifies source IP addresses and accounts associated with failed Windows authentication attempts.
+
+```kql
+SecurityEvent
+| where EventID == 4625
+| summarize Attempts = count() by TargetAccount, IpAddress
+| sort by Attempts desc
+```
+
+**Purpose:** Identify repeated login failures that may indicate password guessing or brute-force activity.
+
+### 2. Monitoring Process Creation with Sysmon
+
+Queried Sysmon Event ID 1 to examine process creation activity on the monitored endpoint.
+
+```kql
+WindowsEvent
+| where Channel == "Microsoft-Windows-Sysmon/Operational"
+| where EventID == 1
+| take 30
+```
+
+**Purpose:** Verify endpoint visibility and investigate process execution activity.
+
+**Result:** Successfully collected Sysmon process creation events, including activity generated while running commands such as `whoami`, `ipconfig /all` and `nslookup github.com` on the VM.
+
+### 3. Automated Brute-Force Detection Rule
+
+Created an enabled Microsoft Sentinel scheduled analytics rule named **Multiple Failed Login Attempts - SOC Lab**.
+
+```kql
+SecurityEvent
+| where EventID == 4625
+| where Computer startswith "soc-lab-vm"
+| summarize FailedAttempts = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by Computer, TargetAccount, IpAddress
+| where FailedAttempts >= 10
+| project TimeGenerated = LastSeen, Computer,
+    TargetAccount, IpAddress, FailedAttempts, FirstSeen
+```
+
+**Detection configuration:**
+- **Severity:** Medium
+- **MITRE ATT&CK:** Credential Access — Brute Force (T1110)
+- **Threshold:** 10 or more failed login attempts per account and source IP within the query window
+- **Query frequency:** Every 15 minutes
+- **Lookback period:** 1 hour
+- **Incident creation:** Enabled
+
+**Result:** The analytics rule successfully generated a security incident in Microsoft Sentinel following repeated failed authentication attempts.
+
+### 4. Investigating Suspicious Authentication Activity
+
+Used a time-bounded KQL query to investigate the failed login attempts associated with the incident.
+
+```kql
+SecurityEvent
+| where EventID == 4625
+| where Computer startswith "soc-lab-vm"
+| where TimeGenerated between (
+    datetime(2026-11-15T17:00:00Z) ..
+    datetime(2026-11-15T18:30:00Z)
+)
+| summarize FailedAttempts = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by TargetAccount, IpAddress
+| sort by FailedAttempts desc
+```
+
+**Findings:**
+
+| Source IP | Failed Login Attempts |
+|---|---:|
+| 45.88.138.5 | 6,536 |
+| 144.225.43.82 | 3 |
+| 220.71.237.220 | 3 |
+
+The results revealed substantial authentication activity from one external IP address, consistent with suspected brute-force behaviour.
+
+Additional investigation was performed to determine whether the suspicious IP addresses had successfully authenticated. The results and incident classification are documented in the following section.
 Used Kusto Query Language (KQL) to confirm that both log sources were successfully transmitting events to the Log Analytics workspace.
 
 - **SecurityEvent:** Verified Windows Security events were arriving, including authentication events.
