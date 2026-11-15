@@ -35,3 +35,36 @@ Windows Security and Sysmon events are generated on the virtual machine and coll
 These events are sent to the Log Analytics workspace, where they can be queried using Kusto Query Language (KQL).
 
 Microsoft Sentinel uses a scheduled analytics rule to detect repeated failed authentication attempts and generate security incidents for investigation.
+## Lab Setup & Log Collection
+
+### 1. Azure Environment Setup
+
+- Created an Azure resource group, `rg-soc-lab`, to organise the lab infrastructure.
+- Deployed a Log Analytics workspace, `law-soc-lab`, to store and analyse security logs.
+- Enabled Microsoft Sentinel on the workspace to provide SIEM monitoring and incident management capabilities.
+- Configured an Azure budget alert to monitor resource usage.
+
+### 2. Windows Virtual Machine Setup
+
+- Deployed a Windows Server 2022 virtual machine named `soc-lab-vm` in Azure.
+- Configured Remote Desktop Protocol (RDP) to access and manage the VM remotely.
+- Installed Microsoft Sysmon with the SwiftOnSecurity configuration to capture detailed endpoint activity.
+- Verified that the Sysmon service was running and generating events in Windows Event Viewer.
+
+### 3. Security Log Collection
+
+Configured the Azure Monitor Agent (AMA) and two Data Collection Rules to forward security events from the VM to Log Analytics:
+
+- **dcr-security-events:** Collects Windows Security logs, including successful and failed authentication events.
+- **dcr-sysmon:** Collects Sysmon Operational events, including process creation and other monitored system activity.
+
+Installed the relevant Microsoft Sentinel data connectors and confirmed successful Azure Monitor Agent provisioning.
+
+### 4. Log Collection Verification
+
+Used Kusto Query Language (KQL) to confirm that both log sources were successfully transmitting events to the Log Analytics workspace.
+
+- **SecurityEvent:** Verified Windows Security events were arriving, including authentication events.
+- **WindowsEvent:** Verified Sysmon events were arriving from the `Microsoft-Windows-Sysmon/Operational` channel.
+
+Both queries returned results, confirming that the VM was successfully forwarding security telemetry to Microsoft Sentinel.
