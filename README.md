@@ -150,6 +150,73 @@ SecurityEvent
 The results revealed substantial authentication activity from one external IP address, consistent with suspected brute-force behaviour.
 
 Additional investigation was performed to determine whether the suspicious IP addresses had successfully authenticated. The results and incident classification are documented in the following section.
+## Security Incident Investigation
+
+### Incident Overview
+
+On **15 November 2026**, Microsoft Sentinel generated an automated security incident after detecting repeated failed authentication attempts against the Windows Server VM.
+
+| Field | Details |
+|---|---|
+| **Incident** | Multiple Failed Login Attempts - SOC Lab |
+| **Severity** | Medium |
+| **Affected System** | `soc-lab-vm` |
+| **Detection** | Windows Security Event ID 4625 |
+| **MITRE ATT&CK** | T1110 — Brute Force |
+| **Classification** | True Positive |
+| **Final Status** | Closed |
+
+### Investigation Process
+
+**1. Investigated the alert**
+
+Reviewed the incident and queried Windows Security logs using KQL to identify affected accounts, source IP addresses and failed authentication attempts.
+
+The investigation identified **6,536 failed login attempts from a single external IP address** within the examined 90-minute period.
+
+**2. Checked for successful authentication**
+
+Used Windows Security Event ID 4624 to investigate successful logins and determine whether the suspicious source IP addresses had authenticated.
+
+```kql
+SecurityEvent
+| where EventID == 4624
+| where Computer startswith "soc-lab-vm"
+| where TimeGenerated between (
+    datetime(2026-11-15T17:00:00Z) ..
+    datetime(2026-11-15T18:30:00Z)
+)
+| where IpAddress in (
+    "45.88.138.5",
+    "144.225.43.82",
+    "220.71.237.220"
+)
+| project TimeGenerated, Account, IpAddress, LogonType
+| sort by TimeGenerated desc
+```
+
+**Result:** No successful logins were identified from the three suspicious IP addresses during the investigated period. Separately observed successful administrator RDP activity was verified as legitimate.
+
+**3. Documented findings**
+
+Recorded the investigation using a structured SOC ticket template, including:
+
+- Alert details, affected system and evidence
+- Relevant Windows event IDs, IP addresses and timestamps
+- Confirmed facts versus assumptions
+- Potential impact, investigation actions and recommended next steps
+
+**4. Classified and closed the incident**
+
+Classified the incident as **True Positive**, consistent with suspected brute-force activity, and closed it after documenting the investigation.
+
+### Investigation Outcome
+
+The collected evidence confirmed repeated failed authentication attempts consistent with potential brute-force behaviour.
+
+**No successful unauthorised access was identified in the reviewed logs.** However, the investigation did not establish that compromise was impossible.
+
+The exercise demonstrated the SOC investigation lifecycle: **Detection → Triage → Log Analysis → Evidence Review → Documentation → Classification → Closure**.
 Used Kusto Query Language (KQL) to confirm that both log sources were successfully transmitting events to the Log Analytics workspace.
 
 - **SecurityEvent:** Verified Windows Security events were arriving, including authentication events.
