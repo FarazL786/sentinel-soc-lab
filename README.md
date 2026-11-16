@@ -273,3 +273,12 @@ The following screenshots document the SOC lab environment, log collection, auto
 ### Additional Evidence
 
 The remaining screenshots, including Sysmon setup, PowerShell commands, process execution logs and successful authentication checks, are available in the repository's `screenshots` directory.
+## What I'd Add Next
+
+To build on this SOC lab and develop my practical security monitoring and incident response skills, the next improvements I'd make are:
+
+- **Additional Detection Rules:** Create rules for suspicious PowerShell activity, unusual account behaviour and other potential security threats.
+- **More Attack Scenarios:** Simulate different types of attacks to practise detecting, investigating and responding to security incidents.
+- **Incident Response Automation:** Explore Microsoft Sentinel playbooks and automation rules to automate parts of the investigation and response process.
+- **Threat Intelligence Integration:** Incorporate threat intelligence sources to provide additional context when investigating suspicious IP addresses.
+- **Expanded MITRE ATT&CK Coverage:** Map more detection rules to MITRE ATT&CK techniques to improve threat detection coverage.
